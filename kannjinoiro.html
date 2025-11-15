@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<title>漢字色当てゲーム</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<style>
+body { 
+  text-align:center; 
+  font-family:sans-serif; 
+  background:#eb97ca; 
+  margin:0; 
+  padding:0; 
+  height:100vh; 
+  display:flex; 
+  justify-content:center; 
+  align-items:center; 
+  flex-direction:column;
+}
+#gameArea { position:relative; display:none; width:90%; max-width:500px; }
+#kanji { font-size: calc(40px + 5vw); margin-bottom:20px; z-index:2; position:relative; }
+button.colorBtn { width: calc(50px + 2vw); height: calc(50px + 2vw); margin:5px; border-radius:50%; border:none; cursor:pointer; transition:0.2s; z-index:2; position:relative; }
+#medals, #time, #combo { font-size: calc(14px + 1vw); margin-top:10px; z-index:2; position:relative; }
+#feedback {
+  position:absolute; top:0; left:0; width:100%; height:100%; font-size:200px;
+  display:flex; justify-content:center; align-items:center; pointer-events:none; z-index:1;
+  opacity:0; transition:opacity 0.3s ease;
+}
+#startBtn, #restartBtn {
+  font-size: calc(16px + 1vw); 
+  padding: 12px 25px; 
+  cursor:pointer; 
+  margin-top:20px; 
+  border:none; 
+  border-radius:25px;
+  background: linear-gradient(45deg, #ff9a9e, #fad0c4); 
+  color:white; 
+  font-weight:bold;
+  box-shadow: 0 5px 10px rgba(0,0,0,0.2); 
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+#startBtn:hover, #restartBtn:hover { transform: scale(1.05); box-shadow: 0 8px 15px rgba(0,0,0,0.3); }
+#restartBtn { display:none; }
+
+@media (max-width: 400px){
+  #kanji { font-size: calc(30px + 5vw); }
+  button.colorBtn { width: 45px; height: 45px; }
+}
+</style>
+</head>
+<body>
+
+<h1>漢字の文字が赤だったら赤を選んでね</h1>
+<button id="startBtn">スタート</button>
+<button id="restartBtn">もう一度スタート</button>
+
+<div id="gameArea">
+  <div id="kanji">赤</div>
+  <div id="feedback"></div>
+  <div>
+    <button class="colorBtn" style="background:red" data-color="赤"></button>
+    <button class="colorBtn" style="background:yellow" data-color="黄"></button>
+    <button class="colorBtn" style="background:blue" data-color="青"></button>
+    <button class="colorBtn" style="background:black" data-color="黒"></button>
+    <button class="colorBtn" style="background:white" data-color="白"></button>
+  </div>
+</div>
+<div id="medals">スコア: 0</div>
+<div id="combo">コンボ: 0</div>
+<div id="time">残り時間: 60秒</div>
+
+<script>
+const colors = ["赤","黄","青","黒","白"];
+let goldMedals = 0;
+let combo = 0;
+let timeLeft = 60;
+let timer = null;
+const kanjiDiv = document.getElementById("kanji");
+const medalDiv = document.getElementById("medals");
+const comboDiv = document.getElementById("combo");
+const timeDiv = document.getElementById("time");
+const feedbackDiv = document.getElementById("feedback");
+const gameArea = document.getElementById("gameArea");
+const startBtn = document.getElementById("startBtn");
+const restartBtn = document.getElementById("restartBtn");
+
+function newKanji(){
+  const randomKanji = colors[Math.floor(Math.random()*colors.length)];
+  kanjiDiv.textContent = randomKanji;
+  const displayColors = ["red","yellow","blue","black","white"];
+  const randomColor = displayColors[Math.floor(Math.random()*displayColors.length)];
+  kanjiDiv.style.color = randomColor;
+}
+
+// クリック・タッチ処理
+document.querySelectorAll("#gameArea .colorBtn").forEach(btn=>{
+  btn.addEventListener("click", ()=>{
+    if(timeLeft <= 0) return;
+    const selected = btn.dataset.color;
+    const currentKanji = kanjiDiv.textContent;
+
+    if(selected === currentKanji){
+      combo++;
+      let bonus = 10 + (combo-1)*5;
+      goldMedals += bonus;
+      feedbackDiv.textContent = "○";
+      feedbackDiv.style.color = "rgba(0,255,0,0.2)";
+    } else {
+      combo = 0;
+      feedbackDiv.textContent = "✖︎";
+      feedbackDiv.style.color = "rgba(255,0,0,0.2)";
+    }
+
+    feedbackDiv.style.opacity = 1;
+    medalDiv.textContent = `スコア: ${goldMedals}`;
+    comboDiv.textContent = `コンボ: ${combo}`;
+
+    setTimeout(()=>{
+      feedbackDiv.style.opacity = 0;
+      setTimeout(newKanji, 300);
+    }, 800);
+  });
+});
+
+// ゲーム開始関数
+function startGame(){
+  newKanji();
+  timeLeft = 60;
+  medalDiv.textContent = `スコア: ${goldMedals}`;
+  comboDiv.textContent = `コンボ: ${combo}`;
+  timeDiv.textContent = `残り時間: ${timeLeft}秒`;
+  timer = setInterval(()=>{
+    timeLeft--;
+    timeDiv.textContent = `残り時間: ${timeLeft}秒`;
+    if(timeLeft <= 0){
+      clearInterval(timer);
+      gameArea.style.display = "none";
+      restartBtn.style.display = "inline-block";
+    }
+  }, 1000);
+}
+
+// スタートボタン
+startBtn.addEventListener("click", ()=>{
+  startBtn.style.display = "none";
+  gameArea.style.display = "block";
+  startGame();
+});
+
+// 再スタートボタン
+restartBtn.addEventListener("click", ()=>{
+  restartBtn.style.display = "none";
+  goldMedals = 0;
+  combo = 0;
+  gameArea.style.display = "block";
+  startGame();
+});
+</script>
+
+</body>
+</html>
